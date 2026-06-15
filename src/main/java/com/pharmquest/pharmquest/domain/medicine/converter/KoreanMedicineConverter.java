@@ -23,11 +23,11 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class KoreanMedicineConverter {
 
-    private final AmazonS3 amazonS3;
-    private final RestTemplate restTemplate = new RestTemplate();
-
-    @Value("${cloud.aws.s3.bucket}")
-    private String bucketName;
+//    private final AmazonS3 amazonS3;
+//    private final RestTemplate restTemplate = new RestTemplate();
+//
+//    @Value("${cloud.aws.s3.bucket}")
+//    private String bucketName;
 
     /**
      * JSON 데이터를 KoreanMedicineResponseDTO로 변환 (S3 URL 적용)
@@ -42,7 +42,7 @@ public class KoreanMedicineConverter {
         }
 
         // S3에 업로드 후 새로운 URL 사용
-        String s3ImageUrl = uploadImageToS3(itemImage);
+//        String s3ImageUrl = uploadImageToS3(itemImage);
 
         return KoreanMedicineResponseDTO.builder()
                 .itemName(item.path("itemName").asText(""))
@@ -53,7 +53,7 @@ public class KoreanMedicineConverter {
                 .intrcQesitm(item.path("intrcQesitm").asText(""))
                 .seQesitm(item.path("seQesitm").asText(""))
                 .depositMethodQesitm(item.path("depositMethodQesitm").asText(""))
-                .itemImage(s3ImageUrl) //  변환된 S3 URL 저장
+//                .itemImage(s3ImageUrl) //  변환된 S3 URL 저장
                 .category(category) //  조회 시 사용한 카테고리 설정
                 .build();
     }
@@ -61,7 +61,7 @@ public class KoreanMedicineConverter {
 
     public Medicine convertToMedicineEntity(KoreanMedicineResponseDTO dto) {
 
-        String s3ImageUrl = uploadImageToS3(dto.getItemImage());
+//        String s3ImageUrl = uploadImageToS3(dto.getItemImage());
 
         Medicine medicine = new Medicine();
         medicine.setBrandName(dto.getItemName());
@@ -70,7 +70,7 @@ public class KoreanMedicineConverter {
         medicine.setIndicationsAndUsage(removeNewLines(dto.getDepositMethodQesitm()));
         medicine.setDosageAndAdministration(removeNewLines(dto.getUseMethodQesitm()));
         medicine.setSplSetId(dto.getItemSeq() != null ? dto.getItemSeq() : "-");
-        medicine.setImgUrl(s3ImageUrl);
+//        medicine.setImgUrl(s3ImageUrl);
 
         // ✅ DTO에서 가져온 카테고리를 그대로 저장
         MedicineCategory category = dto.getCategory();
@@ -99,25 +99,25 @@ public class KoreanMedicineConverter {
     /**
      * 이미지를 S3에 업로드 후 S3 URL 반환
      */
-    private String uploadImageToS3(String imageUrl) {
-        try {
-            byte[] imageBytes = restTemplate.getForObject(new URL(imageUrl).toURI(), byte[].class);
-            if (imageBytes == null || imageBytes.length == 0) {
-                throw new RuntimeException("이미지 다운로드 실패: " + imageUrl);
-            }
-
-            String fileName = "medicine-images/" + UUID.randomUUID() + ".jpg";
-            InputStream inputStream = new ByteArrayInputStream(imageBytes);
-            ObjectMetadata metadata = new ObjectMetadata();
-            metadata.setContentLength(imageBytes.length);
-            metadata.setContentType("image/jpeg");
-
-            amazonS3.putObject(bucketName, fileName, inputStream, metadata);
-
-            return amazonS3.getUrl(bucketName, fileName).toString(); // 업로드된 S3 URL 반환
-        } catch (Exception e) {
-            log.error(" S3 업로드 실패, 기존 이미지 URL 사용: {}", imageUrl);
-            return imageUrl; // S3 업로드 실패 시 기존 URL 유지
-        }
-    }
+//    private String uploadImageToS3(String imageUrl) {
+//        try {
+//            byte[] imageBytes = restTemplate.getForObject(new URL(imageUrl).toURI(), byte[].class);
+//            if (imageBytes == null || imageBytes.length == 0) {
+//                throw new RuntimeException("이미지 다운로드 실패: " + imageUrl);
+//            }
+//
+//            String fileName = "medicine-images/" + UUID.randomUUID() + ".jpg";
+//            InputStream inputStream = new ByteArrayInputStream(imageBytes);
+//            ObjectMetadata metadata = new ObjectMetadata();
+//            metadata.setContentLength(imageBytes.length);
+//            metadata.setContentType("image/jpeg");
+//
+//            amazonS3.putObject(bucketName, fileName, inputStream, metadata);
+//
+//            return amazonS3.getUrl(bucketName, fileName).toString(); // 업로드된 S3 URL 반환
+//        } catch (Exception e) {
+//            log.error(" S3 업로드 실패, 기존 이미지 URL 사용: {}", imageUrl);
+//            return imageUrl; // S3 업로드 실패 시 기존 URL 유지
+//        }
+//    }
 }

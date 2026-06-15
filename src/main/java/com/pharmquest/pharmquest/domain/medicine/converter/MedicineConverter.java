@@ -15,6 +15,8 @@ import com.pharmquest.pharmquest.domain.medicine.web.dto.MedicineResponseDTO;
 import com.pharmquest.pharmquest.domain.medicine.web.dto.MedicineSaveDetailResponseDTO;
 import com.pharmquest.pharmquest.domain.user.repository.UserRepository;
 import org.springframework.stereotype.Component;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 
 @Component
 public class MedicineConverter {
@@ -24,14 +26,16 @@ public class MedicineConverter {
     private final MedicineScrapRepository scrapRepository;
     private final UserRepository userRepository;
     private final MedRepository medRepository;
+    private final MeterRegistry meterRegistry;
 
 
-    public MedicineConverter(TranslationService translationService, MedicineRepository medicineRepository, MedicineScrapRepository scrapRepository, UserRepository userRepository, MedRepository medRepository) {
+    public MedicineConverter(TranslationService translationService, MedicineRepository medicineRepository, MedicineScrapRepository scrapRepository, UserRepository userRepository, MedRepository medRepository,MeterRegistry meterRegistry) {
         this.translationService = translationService;
         this.medicineRepository = medicineRepository;
         this.scrapRepository = scrapRepository;
         this.userRepository = userRepository;
         this.medRepository = medRepository;
+        this.meterRegistry=meterRegistry;
     }
 
     // 번역 포함 변환
@@ -107,27 +111,103 @@ public class MedicineConverter {
         );
     }
 
+//    public MedicineSaveDetailResponseDTO SaveConvertToDetail(JsonNode result, Long userId) {
+//        String brandName = translate(getFirstValue(result, "openfda.brand_name"));
+//        String genericName = translate(getFirstValue(result, "openfda.generic_name"));
+//        MedicineCategory categoryEnum = MedicineCategoryMapper.getCategory(
+//                getFirstValue(result, "purpose"),
+//                getFirstValue(result, "active_ingredient"),
+//                "",
+//                getFirstValue(result, "openfda.route")
+//        );
+//        String category = MedicineCategoryMapper.toKoreanCategory(categoryEnum);
+//        String substanceName = translate(getFirstValue(result, "openfda.substance_name"));
+//        String activeIngredient = translate(getFirstValue(result, "active_ingredient"));
+//        String purpose = translate(getFirstValue(result, "purpose"));
+//        String indicationsAndUsage = translate(getFirstValue(result, "indications_and_usage"));
+//        String dosageAndAdministration = translate(getFirstValue(result, "dosage_and_administration"));
+//
+//        String splSetId = getFirstValue(result, "openfda.spl_set_id");
+//        String imgUrl = fetchImageUrl(splSetId);
+//        String country = "USA";
+//        String warnings = translate(getFirstValue(result, "warnings"));
+//
+//
+//
+//        return new MedicineSaveDetailResponseDTO(
+//                brandName,
+//                genericName,
+//                substanceName,
+//                activeIngredient,
+//                purpose,
+//                indicationsAndUsage,
+//                dosageAndAdministration,
+//                splSetId,
+//                imgUrl,
+//                category,
+//                country,
+//                warnings
+//        );
+//    }
+
     public MedicineSaveDetailResponseDTO SaveConvertToDetail(JsonNode result, Long userId) {
+
+        Timer translationTimer = Timer.builder("medicine.translation.duration")
+                .description("약물 정보 번역 시간")
+                .register(meterRegistry);
+
+        Timer imageTimer = Timer.builder("medicine.image.duration")
+                .description("약물 이미지 URL 조회 시간")
+                .register(meterRegistry);
+
+
+        Timer.Sample translationSample1 = Timer.start(meterRegistry);
+
         String brandName = translate(getFirstValue(result, "openfda.brand_name"));
         String genericName = translate(getFirstValue(result, "openfda.generic_name"));
+
+        translationSample1.stop(translationTimer);
+
+
         MedicineCategory categoryEnum = MedicineCategoryMapper.getCategory(
                 getFirstValue(result, "purpose"),
                 getFirstValue(result, "active_ingredient"),
                 "",
                 getFirstValue(result, "openfda.route")
         );
+
         String category = MedicineCategoryMapper.toKoreanCategory(categoryEnum);
+
+
+        Timer.Sample translationSample2 = Timer.start(meterRegistry);
+
         String substanceName = translate(getFirstValue(result, "openfda.substance_name"));
         String activeIngredient = translate(getFirstValue(result, "active_ingredient"));
         String purpose = translate(getFirstValue(result, "purpose"));
         String indicationsAndUsage = translate(getFirstValue(result, "indications_and_usage"));
         String dosageAndAdministration = translate(getFirstValue(result, "dosage_and_administration"));
 
+        translationSample2.stop(translationTimer);
+
+
         String splSetId = getFirstValue(result, "openfda.spl_set_id");
+
+
+        Timer.Sample imageSample = Timer.start(meterRegistry);
+
         String imgUrl = fetchImageUrl(splSetId);
+
+        imageSample.stop(imageTimer);
+
+
         String country = "USA";
+
+
+        Timer.Sample translationSample3 = Timer.start(meterRegistry);
+
         String warnings = translate(getFirstValue(result, "warnings"));
 
+        translationSample3.stop(translationTimer);
 
 
         return new MedicineSaveDetailResponseDTO(
@@ -145,7 +225,6 @@ public class MedicineConverter {
                 warnings
         );
     }
-
 
 
     // 번역 없이 변환
@@ -224,5 +303,25 @@ public class MedicineConverter {
                 medicine.getCountry(),
                 isScrapped
         );
+    }
+
+    // 원본 데이터 검사 메서드
+    public boolean hasRequiredRawFields(JsonNode result) {
+        return isValidRawValue(getFirstValue(result, "openfda.brand_name"))
+                && isValidRawValue(getFirstValue(result, "openfda.generic_name"))
+                && isValidRawValue(getFirstValue(result, "openfda.substance_name"))
+                && isValidRawValue(getFirstValue(result, "active_ingredient"))
+                && isValidRawValue(getFirstValue(result, "purpose"))
+                && isValidRawValue(getFirstValue(result, "indications_and_usage"))
+                && isValidRawValue(getFirstValue(result, "dosage_and_administration"))
+                && isValidRawValue(getFirstValue(result, "openfda.spl_set_id"))
+                && isValidRawValue(getFirstValue(result, "warnings"));
+    }
+
+    private boolean isValidRawValue(String value) {
+        return value != null
+                && !value.isBlank()
+                && !value.equalsIgnoreCase("Unknown")
+                && !value.equals("알려지지 않은");
     }
 }

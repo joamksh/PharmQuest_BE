@@ -28,6 +28,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 @Slf4j
 @Service
 public class MedicineServiceImpl implements MedicineService {
@@ -37,13 +39,15 @@ public class MedicineServiceImpl implements MedicineService {
     private final MedRepository medRepository;
     private final MedicineScrapRepository scrapRepository;
     private final UserRepository userRepository;
+    private final MeterRegistry meterRegistry;
 
-    public MedicineServiceImpl(MedicineRepository medicineRepository, MedicineConverter medicineConverter,MedRepository medRepository, MedicineScrapRepository scrapRepository,UserRepository userRepository) {
+    public MedicineServiceImpl(MedicineRepository medicineRepository, MedicineConverter medicineConverter,MedRepository medRepository, MedicineScrapRepository scrapRepository,UserRepository userRepository, MeterRegistry meterRegistry) {
         this.medicineRepository = medicineRepository;
         this.medicineConverter = medicineConverter;
         this.medRepository = medRepository;
         this.scrapRepository = scrapRepository;
         this.userRepository = userRepository;
+        this.meterRegistry = meterRegistry;
     }
 
 
@@ -254,7 +258,12 @@ public class MedicineServiceImpl implements MedicineService {
             int retryCount = 0;
 
             while (savedMedicines.size() < limit && retryCount < 3) { // 최대 3번 추가 요청
-                String response = medicineRepository.fetchMedicineData(query, requestLimit);
+//                String response = medicineRepository.fetchMedicineData(query, requestLimit);
+                // FDA API 조회 시간 측정
+                String response = Timer.builder("medicine.external.api.duration")
+                        .tag("api", "fda")
+                        .register(meterRegistry)
+                        .record(() -> medicineRepository.fetchMedicineData(query, requestLimit));
                 ObjectMapper mapper = new ObjectMapper();
                 JsonNode results = mapper.readTree(response).path("results");
 
@@ -267,7 +276,18 @@ public class MedicineServiceImpl implements MedicineService {
                             continue;
                         }
 
-                        MedicineSaveDetailResponseDTO dto = medicineConverter.SaveConvertToDetail(result, null);
+//                        // 번역과 이미지 조회 전에 FDA 원본 필수값 검사
+//                        if (!medicineConverter.hasRequiredRawFields(result)) {
+//                            meterRegistry.counter("medicine.raw.invalid.count").increment();
+//                            continue;
+//                        }
+
+//                        MedicineSaveDetailResponseDTO dto = medicineConverter.SaveConvertToDetail(result, null);
+                        // 변환·번역·이미지 조회 전체 시간 측정
+                        MedicineSaveDetailResponseDTO dto =
+                                Timer.builder("medicine.convert.duration")
+                                        .register(meterRegistry)
+                                        .record(() -> medicineConverter.SaveConvertToDetail(result, null));
 
                         if (isValidSaveMedicineDetail(dto)) {
                             Medicine medicine = new Medicine();
@@ -284,7 +304,15 @@ public class MedicineServiceImpl implements MedicineService {
                             medicine.setCountry(dto.getCountry());
                             medicine.setWarnings(dto.getWarnings());
 
-                            savedMedicines.add(medRepository.save(medicine));
+//                            savedMedicines.add(medRepository.save(medicine));
+                            // DB 저장 시간 측정
+                            Medicine savedMedicine =
+                                    Timer.builder("medicine.database.duration")
+                                            .tag("operation", "save")
+                                            .register(meterRegistry)
+                                            .record(() -> medRepository.save(medicine));
+
+                            savedMedicines.add(savedMedicine);
                         }
 
                         if (savedMedicines.size() >= limit) break;
