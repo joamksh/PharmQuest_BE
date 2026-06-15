@@ -276,11 +276,11 @@ public class MedicineServiceImpl implements MedicineService {
                             continue;
                         }
 
-//                        // 번역과 이미지 조회 전에 FDA 원본 필수값 검사
-//                        if (!medicineConverter.hasRequiredRawFields(result)) {
-//                            meterRegistry.counter("medicine.raw.invalid.count").increment();
-//                            continue;
-//                        }
+                        // 번역과 이미지 조회 전에 FDA 원본 필수값 검사
+                        if (!medicineConverter.hasRequiredRawFields(result)) {
+                            meterRegistry.counter("medicine.raw.invalid.count").increment();
+                            continue;
+                        }
 
 //                        MedicineSaveDetailResponseDTO dto = medicineConverter.SaveConvertToDetail(result, null);
                         // 변환·번역·이미지 조회 전체 시간 측정
