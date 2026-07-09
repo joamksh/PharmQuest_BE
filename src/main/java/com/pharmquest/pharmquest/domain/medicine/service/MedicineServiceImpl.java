@@ -329,6 +329,7 @@ public class MedicineServiceImpl implements MedicineService {
 
             return savedMedicines;
         } catch (Exception e) {
+//            log.error("FDA API 데이터를 저장하는 중 오류 발생", e);
             throw new RuntimeException("FDA API 데이터를 저장하는 중 오류 발생", e);
         }
     }

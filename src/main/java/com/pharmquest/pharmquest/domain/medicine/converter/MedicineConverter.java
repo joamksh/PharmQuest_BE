@@ -18,6 +18,11 @@ import org.springframework.stereotype.Component;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 @Component
 public class MedicineConverter {
 
@@ -27,6 +32,10 @@ public class MedicineConverter {
     private final UserRepository userRepository;
     private final MedRepository medRepository;
     private final MeterRegistry meterRegistry;
+
+    @Autowired
+    @Qualifier("translationExecutor")
+    private Executor translationExecutor;
 
 
     public MedicineConverter(TranslationService translationService, MedicineRepository medicineRepository, MedicineScrapRepository scrapRepository, UserRepository userRepository, MedRepository medRepository,MeterRegistry meterRegistry) {
@@ -150,48 +159,184 @@ public class MedicineConverter {
 //        );
 //    }
 
+    // 동기 방식 8개 번역 순서대로
+//    public MedicineSaveDetailResponseDTO SaveConvertToDetail(JsonNode result, Long userId) {
+//
+//        Timer translationTimer = Timer.builder("medicine.translation.duration")
+//                .description("약물 정보 번역 시간")
+//                .register(meterRegistry);
+//
+//        Timer imageTimer = Timer.builder("medicine.image.duration")
+//                .description("약물 이미지 URL 조회 시간")
+//                .register(meterRegistry);
+//
+//
+//        Timer.Sample translationSample1 = Timer.start(meterRegistry);
+//
+//        String brandName = translate(getFirstValue(result, "openfda.brand_name"));
+//        String genericName = translate(getFirstValue(result, "openfda.generic_name"));
+//
+//        translationSample1.stop(translationTimer);
+//
+//
+//        MedicineCategory categoryEnum = MedicineCategoryMapper.getCategory(
+//                getFirstValue(result, "purpose"),
+//                getFirstValue(result, "active_ingredient"),
+//                "",
+//                getFirstValue(result, "openfda.route")
+//        );
+//
+//        String category = MedicineCategoryMapper.toKoreanCategory(categoryEnum);
+//
+//
+//        Timer.Sample translationSample2 = Timer.start(meterRegistry);
+//
+//        String substanceName = translate(getFirstValue(result, "openfda.substance_name"));
+//        String activeIngredient = translate(getFirstValue(result, "active_ingredient"));
+//        String purpose = translate(getFirstValue(result, "purpose"));
+//        String indicationsAndUsage = translate(getFirstValue(result, "indications_and_usage"));
+//        String dosageAndAdministration = translate(getFirstValue(result, "dosage_and_administration"));
+//
+//        translationSample2.stop(translationTimer);
+//
+//
+//        String splSetId = getFirstValue(result, "openfda.spl_set_id");
+//
+//
+//        Timer.Sample imageSample = Timer.start(meterRegistry);
+//
+//        String imgUrl = fetchImageUrl(splSetId);
+//
+//        imageSample.stop(imageTimer);
+//
+//
+//        String country = "USA";
+//
+//
+//        Timer.Sample translationSample3 = Timer.start(meterRegistry);
+//
+//        String warnings = translate(getFirstValue(result, "warnings"));
+//
+//        translationSample3.stop(translationTimer);
+//
+//
+//        return new MedicineSaveDetailResponseDTO(
+//                brandName,
+//                genericName,
+//                substanceName,
+//                activeIngredient,
+//                purpose,
+//                indicationsAndUsage,
+//                dosageAndAdministration,
+//                splSetId,
+//                imgUrl,
+//                category,
+//                country,
+//                warnings
+//        );
+//    }
+    // 비동기 처리 8개에서 4개씩 스레드 풀 생성
     public MedicineSaveDetailResponseDTO SaveConvertToDetail(JsonNode result, Long userId) {
 
         Timer translationTimer = Timer.builder("medicine.translation.duration")
-                .description("약물 정보 번역 시간")
+                .description("약물 정보 병렬 번역 시간")
                 .register(meterRegistry);
 
         Timer imageTimer = Timer.builder("medicine.image.duration")
                 .description("약물 이미지 URL 조회 시간")
                 .register(meterRegistry);
 
+        String originalBrandName = getFirstValue(result, "openfda.brand_name");
+        String originalGenericName = getFirstValue(result, "openfda.generic_name");
+        String originalSubstanceName = getFirstValue(result, "openfda.substance_name");
+        String originalActiveIngredient = getFirstValue(result, "active_ingredient");
+        String originalPurpose = getFirstValue(result, "purpose");
+        String originalIndicationsAndUsage = getFirstValue(result, "indications_and_usage");
+        String originalDosageAndAdministration = getFirstValue(result, "dosage_and_administration");
+        String originalWarnings = getFirstValue(result, "warnings");
 
-        Timer.Sample translationSample1 = Timer.start(meterRegistry);
+        Timer.Sample translationSample = Timer.start(meterRegistry);
 
-        String brandName = translate(getFirstValue(result, "openfda.brand_name"));
-        String genericName = translate(getFirstValue(result, "openfda.generic_name"));
+        CompletableFuture<String> brandNameFuture =
+                CompletableFuture.supplyAsync(
+                        () -> translate(originalBrandName),
+                        translationExecutor
+                );
 
-        translationSample1.stop(translationTimer);
+        CompletableFuture<String> genericNameFuture =
+                CompletableFuture.supplyAsync(
+                        () -> translate(originalGenericName),
+                        translationExecutor
+                );
 
+        CompletableFuture<String> substanceNameFuture =
+                CompletableFuture.supplyAsync(
+                        () -> translate(originalSubstanceName),
+                        translationExecutor
+                );
+
+        CompletableFuture<String> activeIngredientFuture =
+                CompletableFuture.supplyAsync(
+                        () -> translate(originalActiveIngredient),
+                        translationExecutor
+                );
+
+        CompletableFuture<String> purposeFuture =
+                CompletableFuture.supplyAsync(
+                        () -> translate(originalPurpose),
+                        translationExecutor
+                );
+
+        CompletableFuture<String> indicationsAndUsageFuture =
+                CompletableFuture.supplyAsync(
+                        () -> translate(originalIndicationsAndUsage),
+                        translationExecutor
+                );
+
+        CompletableFuture<String> dosageAndAdministrationFuture =
+                CompletableFuture.supplyAsync(
+                        () -> translate(originalDosageAndAdministration),
+                        translationExecutor
+                );
+
+        CompletableFuture<String> warningsFuture =
+                CompletableFuture.supplyAsync(
+                        () -> translate(originalWarnings),
+                        translationExecutor
+                );
+
+        CompletableFuture.allOf(
+                brandNameFuture,
+                genericNameFuture,
+                substanceNameFuture,
+                activeIngredientFuture,
+                purposeFuture,
+                indicationsAndUsageFuture,
+                dosageAndAdministrationFuture,
+                warningsFuture
+        ).join();
+
+        String brandName = brandNameFuture.join();
+        String genericName = genericNameFuture.join();
+        String substanceName = substanceNameFuture.join();
+        String activeIngredient = activeIngredientFuture.join();
+        String purpose = purposeFuture.join();
+        String indicationsAndUsage = indicationsAndUsageFuture.join();
+        String dosageAndAdministration = dosageAndAdministrationFuture.join();
+        String warnings = warningsFuture.join();
+
+        translationSample.stop(translationTimer);
 
         MedicineCategory categoryEnum = MedicineCategoryMapper.getCategory(
-                getFirstValue(result, "purpose"),
-                getFirstValue(result, "active_ingredient"),
+                originalPurpose,
+                originalActiveIngredient,
                 "",
                 getFirstValue(result, "openfda.route")
         );
 
         String category = MedicineCategoryMapper.toKoreanCategory(categoryEnum);
 
-
-        Timer.Sample translationSample2 = Timer.start(meterRegistry);
-
-        String substanceName = translate(getFirstValue(result, "openfda.substance_name"));
-        String activeIngredient = translate(getFirstValue(result, "active_ingredient"));
-        String purpose = translate(getFirstValue(result, "purpose"));
-        String indicationsAndUsage = translate(getFirstValue(result, "indications_and_usage"));
-        String dosageAndAdministration = translate(getFirstValue(result, "dosage_and_administration"));
-
-        translationSample2.stop(translationTimer);
-
-
         String splSetId = getFirstValue(result, "openfda.spl_set_id");
-
 
         Timer.Sample imageSample = Timer.start(meterRegistry);
 
@@ -199,16 +344,7 @@ public class MedicineConverter {
 
         imageSample.stop(imageTimer);
 
-
         String country = "USA";
-
-
-        Timer.Sample translationSample3 = Timer.start(meterRegistry);
-
-        String warnings = translate(getFirstValue(result, "warnings"));
-
-        translationSample3.stop(translationTimer);
-
 
         return new MedicineSaveDetailResponseDTO(
                 brandName,
@@ -225,7 +361,6 @@ public class MedicineConverter {
                 warnings
         );
     }
-
 
     // 번역 없이 변환
     public MedicineOpenapiResponseDTO  convertWithoutTranslation(JsonNode result) {
