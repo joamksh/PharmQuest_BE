@@ -37,6 +37,10 @@ public class MedicineConverter {
     @Qualifier("translationExecutor")
     private Executor translationExecutor;
 
+    @Autowired
+    @Qualifier("imageExecutor")
+    private Executor imageExecutor;
+
 
     public MedicineConverter(TranslationService translationService, MedicineRepository medicineRepository, MedicineScrapRepository scrapRepository, UserRepository userRepository, MedRepository medRepository,MeterRegistry meterRegistry) {
         this.translationService = translationService;
@@ -254,8 +258,15 @@ public class MedicineConverter {
         String originalIndicationsAndUsage = getFirstValue(result, "indications_and_usage");
         String originalDosageAndAdministration = getFirstValue(result, "dosage_and_administration");
         String originalWarnings = getFirstValue(result, "warnings");
+        String splSetId = getFirstValue(result, "openfda.spl_set_id");
 
         Timer.Sample translationSample = Timer.start(meterRegistry);
+
+        CompletableFuture<String> imageFuture =
+                CompletableFuture.supplyAsync(
+                        () -> imageTimer.record(() -> fetchImageUrl(splSetId)),
+                        imageExecutor
+                );
 
         CompletableFuture<String> brandNameFuture =
                 CompletableFuture.supplyAsync(
@@ -326,6 +337,7 @@ public class MedicineConverter {
         String warnings = warningsFuture.join();
 
         translationSample.stop(translationTimer);
+        String imgUrl = imageFuture.join();
 
         MedicineCategory categoryEnum = MedicineCategoryMapper.getCategory(
                 originalPurpose,
@@ -335,14 +347,6 @@ public class MedicineConverter {
         );
 
         String category = MedicineCategoryMapper.toKoreanCategory(categoryEnum);
-
-        String splSetId = getFirstValue(result, "openfda.spl_set_id");
-
-        Timer.Sample imageSample = Timer.start(meterRegistry);
-
-        String imgUrl = fetchImageUrl(splSetId);
-
-        imageSample.stop(imageTimer);
 
         String country = "USA";
 
