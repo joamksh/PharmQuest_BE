@@ -21,6 +21,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 import reactor.core.publisher.Mono;
 
 import java.io.UnsupportedEncodingException;
@@ -40,14 +41,16 @@ public class MedicineServiceImpl implements MedicineService {
     private final MedicineScrapRepository scrapRepository;
     private final UserRepository userRepository;
     private final MeterRegistry meterRegistry;
+    private final TransactionTemplate transactionTemplate;
 
-    public MedicineServiceImpl(MedicineRepository medicineRepository, MedicineConverter medicineConverter,MedRepository medRepository, MedicineScrapRepository scrapRepository,UserRepository userRepository, MeterRegistry meterRegistry) {
+    public MedicineServiceImpl(MedicineRepository medicineRepository, MedicineConverter medicineConverter,MedRepository medRepository, MedicineScrapRepository scrapRepository,UserRepository userRepository, MeterRegistry meterRegistry, TransactionTemplate transactionTemplate) {
         this.medicineRepository = medicineRepository;
         this.medicineConverter = medicineConverter;
         this.medRepository = medRepository;
         this.scrapRepository = scrapRepository;
         this.userRepository = userRepository;
         this.meterRegistry = meterRegistry;
+        this.transactionTemplate = transactionTemplate;
     }
 
 
@@ -247,17 +250,16 @@ public class MedicineServiceImpl implements MedicineService {
 
 
     //카테고리 별 db 저장 로직
-    @Transactional
     public List<Medicine> saveMedicinesByCategory(MedicineCategory category, int limit) {
         try {
             // ✅ Enum 기반으로 검색 쿼리 가져오기 (한글 제거)
             String query = MedicineCategoryMapper.getQueryForCategory(category);
 
-            List<Medicine> savedMedicines = new ArrayList<>();
+            List<Medicine> medicinesToSave = new ArrayList<>();
             int requestLimit = limit * 3; // 더 많은 데이터 요청
             int retryCount = 0;
 
-            while (savedMedicines.size() < limit && retryCount < 3) { // 최대 3번 추가 요청
+            while (medicinesToSave.size() < limit && retryCount < 3) { // 최대 3번 추가 요청
 //                String response = medicineRepository.fetchMedicineData(query, requestLimit);
                 // FDA API 조회 시간 측정
                 String response = Timer.builder("medicine.external.api.duration")
@@ -304,18 +306,10 @@ public class MedicineServiceImpl implements MedicineService {
                             medicine.setCountry(dto.getCountry());
                             medicine.setWarnings(dto.getWarnings());
 
-//                            savedMedicines.add(medRepository.save(medicine));
-                            // DB 저장 시간 측정
-                            Medicine savedMedicine =
-                                    Timer.builder("medicine.database.duration")
-                                            .tag("operation", "save")
-                                            .register(meterRegistry)
-                                            .record(() -> medRepository.save(medicine));
-
-                            savedMedicines.add(savedMedicine);
+                            medicinesToSave.add(medicine);
                         }
 
-                        if (savedMedicines.size() >= limit) break;
+                        if (medicinesToSave.size() >= limit) break;
                     }
                 }
 
@@ -323,11 +317,14 @@ public class MedicineServiceImpl implements MedicineService {
             }
 
             //  최소 개수 미달 시 예외 처리
-            if (savedMedicines.size() < limit) {
-                throw new RuntimeException("충분한 데이터를 저장하지 못했습니다. (현재 개수: " + savedMedicines.size() + ")");
+            if (medicinesToSave.size() < limit) {
+                throw new RuntimeException("충분한 데이터를 저장하지 못했습니다. (현재 개수: " + medicinesToSave.size() + ")");
             }
 
-            return savedMedicines;
+            return Timer.builder("medicine.database.duration")
+                    .tag("operation", "saveAll")
+                    .register(meterRegistry)
+                    .record(() -> transactionTemplate.execute(status -> medRepository.saveAll(medicinesToSave)));
         } catch (Exception e) {
 //            log.error("FDA API 데이터를 저장하는 중 오류 발생", e);
             throw new RuntimeException("FDA API 데이터를 저장하는 중 오류 발생", e);
