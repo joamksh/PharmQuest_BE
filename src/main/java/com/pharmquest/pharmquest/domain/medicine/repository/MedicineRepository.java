@@ -11,9 +11,14 @@ public class MedicineRepository {
 
     @Value("${fda.api.api-key}")
     private String apiKey;
-
+    // 100개부터 동기에서 client크기 1mb넘는 문제 발생해서 읨의로 테스트를 위해 용량 늘리기
     public MedicineRepository(WebClient.Builder webClientBuilder) {
-        this.webClient = webClientBuilder.baseUrl("https://api.fda.gov").build();
+        this.webClient = webClientBuilder
+                .baseUrl("https://api.fda.gov")
+                .codecs(configurer ->
+                        configurer.defaultCodecs().maxInMemorySize(10 * 1024 * 1024)
+                )
+                .build();
     }
 
     // FDA API를 호출하여 약물 데이터를 가져옵니다.
