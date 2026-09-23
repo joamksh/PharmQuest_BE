@@ -1,0 +1,311 @@
+{
+  "datasetId": "synthetic-v1",
+  "kind": "SYNTHETIC",
+  "policyVersion": "v1-draft",
+  "cases": [
+    {
+      "id": "pain",
+      "sourceId": "synthetic:pain",
+      "sourceUrl": "",
+      "language": "en",
+      "split": "DEV",
+      "reviewer": "",
+      "input": {
+        "purpose": "Pain reliever",
+        "activeIngredient": "",
+        "pharmClassEpc": "",
+        "route": "ORAL",
+        "indicationsAndUsage": "Temporary relief of minor pain."
+      },
+      "expectedCategory": "PAIN_RELIEF",
+      "evidenceField": "purpose",
+      "evidence": "Pain reliever",
+      "note": "직접 작성한 가상 문장. 실제 제품이나 검수된 의료 데이터가 아님."
+    },
+    {
+      "id": "digestive",
+      "sourceId": "synthetic:digestive",
+      "sourceUrl": "",
+      "language": "en",
+      "split": "DEV",
+      "reviewer": "",
+      "input": {
+        "purpose": "Antacid",
+        "activeIngredient": "",
+        "pharmClassEpc": "",
+        "route": "ORAL",
+        "indicationsAndUsage": "Relieves heartburn."
+      },
+      "expectedCategory": "DIGESTIVE",
+      "evidenceField": "purpose",
+      "evidence": "Antacid",
+      "note": "직접 작성한 가상 문장. 실제 제품이나 검수된 의료 데이터가 아님."
+    },
+    {
+      "id": "cold",
+      "sourceId": "synthetic:cold",
+      "sourceUrl": "",
+      "language": "en",
+      "split": "DEV",
+      "reviewer": "",
+      "input": {
+        "purpose": "Cough suppressant",
+        "activeIngredient": "",
+        "pharmClassEpc": "",
+        "route": "ORAL",
+        "indicationsAndUsage": "Relieves cough due to a cold."
+      },
+      "expectedCategory": "COLD",
+      "evidenceField": "indicationsAndUsage",
+      "evidence": "Relieves cough due to a cold.",
+      "note": "직접 작성한 가상 문장. 실제 제품이나 검수된 의료 데이터가 아님."
+    },
+    {
+      "id": "allergy",
+      "sourceId": "synthetic:allergy",
+      "sourceUrl": "",
+      "language": "en",
+      "split": "DEV",
+      "reviewer": "",
+      "input": {
+        "purpose": "Antihistamine",
+        "activeIngredient": "",
+        "pharmClassEpc": "",
+        "route": "ORAL",
+        "indicationsAndUsage": "Relieves allergy symptoms."
+      },
+      "expectedCategory": "ALLERGY",
+      "evidenceField": "indicationsAndUsage",
+      "evidence": "Relieves allergy symptoms.",
+      "note": "직접 작성한 가상 문장. 실제 제품이나 검수된 의료 데이터가 아님."
+    },
+    {
+      "id": "antiseptic",
+      "sourceId": "synthetic:antiseptic",
+      "sourceUrl": "",
+      "language": "en",
+      "split": "DEV",
+      "reviewer": "",
+      "input": {
+        "purpose": "Antiseptic",
+        "activeIngredient": "",
+        "pharmClassEpc": "",
+        "route": "TOPICAL",
+        "indicationsAndUsage": "Disinfects minor wounds."
+      },
+      "expectedCategory": "ANTISEPTIC",
+      "evidenceField": "indicationsAndUsage",
+      "evidence": "Disinfects minor wounds.",
+      "note": "직접 작성한 가상 문장. 실제 제품이나 검수된 의료 데이터가 아님."
+    },
+    {
+      "id": "motion",
+      "sourceId": "synthetic:motion",
+      "sourceUrl": "",
+      "language": "en",
+      "split": "DEV",
+      "reviewer": "",
+      "input": {
+        "purpose": "Antiemetic",
+        "activeIngredient": "",
+        "pharmClassEpc": "",
+        "route": "ORAL",
+        "indicationsAndUsage": "Prevents nausea due to motion sickness."
+      },
+      "expectedCategory": "MOTION_SICKNESS",
+      "evidenceField": "indicationsAndUsage",
+      "evidence": "Prevents nausea due to motion sickness.",
+      "note": "직접 작성한 가상 문장. 실제 제품이나 검수된 의료 데이터가 아님."
+    },
+    {
+      "id": "eye",
+      "sourceId": "synthetic:eye",
+      "sourceUrl": "",
+      "language": "en",
+      "split": "DEV",
+      "reviewer": "",
+      "input": {
+        "purpose": "Lubricant",
+        "activeIngredient": "",
+        "pharmClassEpc": "",
+        "route": "OPHTHALMIC",
+        "indicationsAndUsage": "For dry eyes."
+      },
+      "expectedCategory": "EYE_DROPS",
+      "evidenceField": "route",
+      "evidence": "OPHTHALMIC",
+      "note": "직접 작성한 가상 문장. 실제 제품이나 검수된 의료 데이터가 아님."
+    },
+    {
+      "id": "other",
+      "sourceId": "synthetic:other",
+      "sourceUrl": "",
+      "language": "en",
+      "split": "DEV",
+      "reviewer": "",
+      "input": {
+        "purpose": "Antifungal",
+        "activeIngredient": "",
+        "pharmClassEpc": "",
+        "route": "TOPICAL",
+        "indicationsAndUsage": "Treats athlete's foot."
+      },
+      "expectedCategory": "OTHER",
+      "evidenceField": "indicationsAndUsage",
+      "evidence": "Treats athlete's foot.",
+      "note": "직접 작성한 가상 문장. 실제 제품이나 검수된 의료 데이터가 아님."
+    },
+    {
+      "id": "case",
+      "sourceId": "synthetic:case",
+      "sourceUrl": "",
+      "language": "en",
+      "split": "DEV",
+      "reviewer": "",
+      "input": {
+        "purpose": "PAIN RELIEVER",
+        "activeIngredient": "",
+        "pharmClassEpc": "",
+        "route": "ORAL",
+        "indicationsAndUsage": "Relieves minor pain."
+      },
+      "expectedCategory": "PAIN_RELIEF",
+      "evidenceField": "indicationsAndUsage",
+      "evidence": "Relieves minor pain.",
+      "note": "직접 작성한 가상 문장. 실제 제품이나 검수된 의료 데이터가 아님."
+    },
+    {
+      "id": "eye-allergy",
+      "sourceId": "synthetic:eye-allergy",
+      "sourceUrl": "",
+      "language": "en",
+      "split": "DEV",
+      "reviewer": "",
+      "input": {
+        "purpose": "Antihistamine",
+        "activeIngredient": "",
+        "pharmClassEpc": "",
+        "route": "OPHTHALMIC",
+        "indicationsAndUsage": "For itchy eyes due to allergies."
+      },
+      "expectedCategory": "EYE_DROPS",
+      "evidenceField": "route",
+      "evidence": "OPHTHALMIC",
+      "note": "직접 작성한 가상 문장. 실제 제품이나 검수된 의료 데이터가 아님."
+    },
+    {
+      "id": "cold-combination",
+      "sourceId": "synthetic:cold-combination",
+      "sourceUrl": "",
+      "language": "en",
+      "split": "DEV",
+      "reviewer": "",
+      "input": {
+        "purpose": "Pain reliever / Cough suppressant",
+        "activeIngredient": "Acetaminophen",
+        "pharmClassEpc": "",
+        "route": "ORAL",
+        "indicationsAndUsage": "For relief of multiple cold symptoms."
+      },
+      "expectedCategory": "COLD",
+      "evidenceField": "indicationsAndUsage",
+      "evidence": "For relief of multiple cold symptoms.",
+      "note": "직접 작성한 가상 문장. 실제 제품이나 검수된 의료 데이터가 아님."
+    },
+    {
+      "id": "non-motion",
+      "sourceId": "synthetic:non-motion",
+      "sourceUrl": "",
+      "language": "en",
+      "split": "DEV",
+      "reviewer": "",
+      "input": {
+        "purpose": "Antiemetic",
+        "activeIngredient": "",
+        "pharmClassEpc": "",
+        "route": "ORAL",
+        "indicationsAndUsage": "Prevents postoperative nausea and vomiting."
+      },
+      "expectedCategory": "OTHER",
+      "evidenceField": "indicationsAndUsage",
+      "evidence": "Prevents postoperative nausea and vomiting.",
+      "note": "직접 작성한 가상 문장. 실제 제품이나 검수된 의료 데이터가 아님."
+    },
+    {
+      "id": "ko-pain",
+      "sourceId": "synthetic:ko-pain",
+      "sourceUrl": "",
+      "language": "ko",
+      "split": "DEV",
+      "reviewer": "",
+      "input": {
+        "purpose": "",
+        "activeIngredient": "",
+        "pharmClassEpc": "",
+        "route": "경구",
+        "indicationsAndUsage": "두통 및 발열 완화."
+      },
+      "expectedCategory": "PAIN_RELIEF",
+      "evidenceField": "indicationsAndUsage",
+      "evidence": "두통 및 발열 완화.",
+      "note": "직접 작성한 가상 문장. 실제 제품이나 검수된 의료 데이터가 아님."
+    },
+    {
+      "id": "ko-digestive",
+      "sourceId": "synthetic:ko-digestive",
+      "sourceUrl": "",
+      "language": "ko",
+      "split": "DEV",
+      "reviewer": "",
+      "input": {
+        "purpose": "",
+        "activeIngredient": "",
+        "pharmClassEpc": "",
+        "route": "경구",
+        "indicationsAndUsage": "소화불량 완화."
+      },
+      "expectedCategory": "DIGESTIVE",
+      "evidenceField": "indicationsAndUsage",
+      "evidence": "소화불량 완화.",
+      "note": "직접 작성한 가상 문장. 실제 제품이나 검수된 의료 데이터가 아님."
+    },
+    {
+      "id": "ko-cold",
+      "sourceId": "synthetic:ko-cold",
+      "sourceUrl": "",
+      "language": "ko",
+      "split": "DEV",
+      "reviewer": "",
+      "input": {
+        "purpose": "",
+        "activeIngredient": "",
+        "pharmClassEpc": "",
+        "route": "경구",
+        "indicationsAndUsage": "감기로 인한 기침 완화."
+      },
+      "expectedCategory": "COLD",
+      "evidenceField": "indicationsAndUsage",
+      "evidence": "감기로 인한 기침 완화.",
+      "note": "직접 작성한 가상 문장. 실제 제품이나 검수된 의료 데이터가 아님."
+    },
+    {
+      "id": "ko-allergy",
+      "sourceId": "synthetic:ko-allergy",
+      "sourceUrl": "",
+      "language": "ko",
+      "split": "DEV",
+      "reviewer": "",
+      "input": {
+        "purpose": "",
+        "activeIngredient": "",
+        "pharmClassEpc": "",
+        "route": "경구",
+        "indicationsAndUsage": "알레르기 증상 완화."
+      },
+      "expectedCategory": "ALLERGY",
+      "evidenceField": "indicationsAndUsage",
+      "evidence": "알레르기 증상 완화.",
+      "note": "직접 작성한 가상 문장. 실제 제품이나 검수된 의료 데이터가 아님."
+    }
+  ]
+}

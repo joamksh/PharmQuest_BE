@@ -3,6 +3,7 @@ package com.pharmquest.pharmquest.domain.medicine.repository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
 import org.springframework.web.reactive.function.client.WebClient;
+import java.time.Duration;
 
 @Repository
 public class MedicineRepository {
@@ -23,16 +24,20 @@ public class MedicineRepository {
 
     // FDA API를 호출하여 약물 데이터를 가져옵니다.
     public String fetchMedicineData(String query, int limit) {
+        return fetchMedicineData(query, limit, 0);
+    }
+
+    public String fetchMedicineData(String query, int limit, int skip) {
         return webClient.get()
-                .uri(uriBuilder -> uriBuilder
-                        .path("/drug/label.json")
-                        .queryParam("search", query)
-                        .queryParam("limit", limit)
-                        .queryParam("api_key", apiKey)
-                        .build())
+                .uri(uriBuilder -> {
+                    uriBuilder.path("/drug/label.json").queryParam("limit", limit).queryParam("skip", skip);
+                    if (query != null && !query.isBlank()) uriBuilder.queryParam("search", query);
+                    if (apiKey != null && !apiKey.isBlank()) uriBuilder.queryParam("api_key", apiKey);
+                    return uriBuilder.build();
+                })
                 .retrieve()
                 .bodyToMono(String.class)
-                .block();
+                .block(Duration.ofSeconds(30));
     }
 
     // DailyMed API를 호출하여 주어진 SPL Set ID에 대한 이미지 데이터를 가져옵니다.

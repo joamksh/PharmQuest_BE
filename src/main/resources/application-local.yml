@@ -1,0 +1,67 @@
+# Local development only. Activate explicitly with --spring.profiles.active=local.
+openai:
+  api-key: ${OPENAI_API_KEY:}
+spring:
+  config:
+    import: optional:file:./config/application-local-secrets.properties
+  datasource:
+    url: jdbc:mysql://127.0.0.1:${MYSQL_PORT:3307}/pharmquest?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    username: pharmquest
+    password: ${MYSQL_PASSWORD:pharmquest-local}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+server:
+  address: 127.0.0.1
+  port: 8080
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+app:
+  oauth:
+    enabled: false
+jwt:
+  # Public development-only key; never use for a deployed environment.
+  secret: ${JWT_SECRET:cGhhcm1xdWVzdC1sb2NhbC1kZXZlbG9wbWVudC1vbmx5LXNpZ25pbmcta2V5}
+  redirect: http://localhost:3000
+  access-token:
+    expiration-time: 3600000
+  refresh-token:
+    expiration-time: 604800000
+cloud:
+  aws:
+    stack:
+      auto: false
+    region:
+      static: ap-northeast-2
+      auto: false
+    credentials:
+      access-key: local-disabled
+      secret-key: local-disabled
+      instance-profile: false
+    s3:
+      bucket: local-disabled
+fda:
+  api:
+    api-key: ${FDA_API_KEY:}
+openapi:
+  medicine:
+    base-url: https://apis.data.go.kr/1471000/DrbEasyDrugInfoService
+    api-key: ${MEDICINE_API_KEY:}
+google:
+  cloud:
+    translate:
+      enabled: ${GOOGLE_TRANSLATE_ENABLED:false}
+      api-key: ${GOOGLE_TRANSLATE_API_KEY:}
+place:
+  details:
+    api-key: ${GOOGLE_PLACES_API_KEY:}
+naver:
+  client:
+    id: ${NAVER_CLIENT_ID:}
+    secret: ${NAVER_CLIENT_SECRET:}
+  api:
+    url: https://openapi.naver.com/v1/search/shop.json

@@ -10,7 +10,12 @@ public class TranslationService {
 
     private final Translate translate;
 
-    public TranslationService(@Value("${google.cloud.translate.api-key}") String apiKey) {
+    public TranslationService(@Value("${google.cloud.translate.api-key}") String apiKey,
+                              @Value("${google.cloud.translate.enabled:true}") boolean enabled) {
+        if (!enabled) {
+            this.translate = null;
+            return;
+        }
         if (apiKey == null || apiKey.isEmpty()) {
             throw new IllegalArgumentException("Google Cloud Translation API 키가 비어 있습니다!");
         }
@@ -23,6 +28,9 @@ public class TranslationService {
     }
 
     public String translateText(String text, String targetLanguage) {
+        if (translate == null) {
+            throw new IllegalStateException("Translation is disabled. Configure google.cloud.translate.api-key and enable translation.");
+        }
         Translation translation = this.translate.translate(
                 text,
                 Translate.TranslateOption.targetLanguage(targetLanguage)

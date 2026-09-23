@@ -35,3 +35,8 @@ out/
 
 ### VS Code ###
 .vscode/
+
+# Local credentials and process logs
+config/application-local-secrets.properties
+.env
+.local/

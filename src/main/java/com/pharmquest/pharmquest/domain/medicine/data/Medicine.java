@@ -13,10 +13,15 @@ public class Medicine {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    @Column(columnDefinition = "TEXT")
     private String brandName;
+    @Column(columnDefinition = "TEXT")
     private String genericName;
+    @Column(columnDefinition = "TEXT")
     private String substanceName;
+    @Column(columnDefinition = "TEXT")
     private String activeIngredient;
+    @Column(columnDefinition = "TEXT")
     private String purpose;
     @Column(columnDefinition = "TEXT")
     private String indicationsAndUsage;
@@ -27,6 +32,8 @@ public class Medicine {
     @Enumerated(EnumType.STRING)
     private MedicineCategory category;
     private String country;
+    @Column(columnDefinition = "TEXT")
+    private String route;
     @Column(columnDefinition = "TEXT")
     private String warnings;
 }
