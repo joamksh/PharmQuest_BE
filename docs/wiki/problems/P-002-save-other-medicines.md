@@ -61,7 +61,7 @@
 
 ## 가설 (미검증)
 
-- **[가설]** IDENTITY 전략에서 `save()`가 즉시 INSERT를 실행하고 같은 트랜잭션의 `existsBySplSetId`가 이를 보는지(auto flush). T3b는 이를 Mock으로 **모사**한 것이라 증거가 아니다. 실제 확인에는 JPA와 DB(H2/Testcontainers 등, 새 의존성)가 필요하다. 이 가설이 맞더라도 Set은 DB 왕복을 줄이고 DB 동작에 의존하지 않게 하므로 유지한다.
+- **[B-010에서 테스트 DB 기준 확인됨: [test-environment](../test-environment.md#b-010-jpa-저장조회롤백-검증) J1·J4·S4]** (아래는 확인 전 가설 기록) IDENTITY 전략에서 `save()`가 즉시 INSERT를 실행하고 같은 트랜잭션의 `existsBySplSetId`가 이를 보는지(auto flush). T3b는 이를 Mock으로 **모사**한 것이라 증거가 아니다. 실제 확인에는 JPA와 DB(H2/Testcontainers 등, 새 의존성)가 필요하다. 이 가설이 맞더라도 Set은 DB 왕복을 줄이고 DB 동작에 의존하지 않게 하므로 유지한다.
 - **[가설]** 실제 컨버터가 빈 배열에서 NPE를 던지는 경로는 이제 `extractSplSetId`가 먼저 걸러 `saveOtherMedicines`에서는 변환에 도달하지 않는다. 다만 서비스 테스트의 컨버터 Mock은 이를 검증하지 못한다.
 - **[가설]** 운영 DB에 이미 `""` 키로 저장된 중복 행이 있는지.
 

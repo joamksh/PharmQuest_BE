@@ -130,7 +130,7 @@
 
 ### 아직 검증하지 않은 것
 
-- JPA 저장·조회, flush, 커밋·롤백 (Phase 1 범위 밖).
+- JPA 저장·조회, flush, 커밋·롤백: Phase 1 범위 밖이었고 **B-010에서 테스트 DB 기준으로 검증함** (아래 섹션).
 - **운영 DB와 운영 DDL**: 임시 스키마(`create-drop`)는 운영 DDL과 같다는 보장이 없다. `Medicine.splSetId`의 unique 제약(B-004), collation(B-007)은 운영 DDL이 필요하다.
 - 운영 MySQL 버전.
 - CI(`ubuntu-latest`)에서의 실행. `dev_deploy.yml`은 수정하지 않았다.
@@ -178,3 +178,32 @@
 - 새 테스트 의존성 (A, B)
 - `src/test/resources` 설정 추가
 - CI 워크플로 변경
+
+## B-010: JPA 저장·조회·롤백 검증
+
+**[확인]** 로컬 실행: `mysql:8.0`(서버 8.0.46), 격리 수준 REPEATABLE-READ, `sql_mode`에 `STRICT_TRANS_TABLES` 포함. 테스트 스키마는 `create-drop`(엔티티 기준)이며 **운영 DDL과 같다는 보장이 없다**.
+
+코드 커밋: `9d9e852`.
+
+방법: 테스트 메서드에 `@Transactional`을 쓰지 않고 `TransactionTemplate`으로 경계를 직접 제어한다. 커밋 여부는 `DbTestSupport`가 여는 **별도 JDBC 연결**(커밋된 데이터만 보임)로, INSERT/UPDATE 실행 시점은 Hibernate `Statistics`로 본다.
+
+| ID | 확인한 내용 (테스트 DB 기준) |
+|---|---|
+| J1 | IDENTITY: `save()` 직후 INSERT 1회·id 채워짐, 커밋 전 다른 연결에는 0행 |
+| J2 | `flush()`는 INSERT를 다시 실행하지 않음 |
+| J3 | 변경 감지 UPDATE는 flush 때 실행, 다른 연결에는 commit 후에야 보임 |
+| J4 | 같은 트랜잭션의 `existsBySplSetId`가 미커밋 `save()`를 봄 (P-002 가설 확인) |
+| J5, J6 | commit 후 가시, 예외 롤백 시 이미 실행된 INSERT도 취소 |
+| J7 | 롤백해도 AUTO_INCREMENT는 되돌아가지 않음 |
+| J8 | `saveAll` 중간 실패: 앞 INSERT는 실행됐으나 전체 롤백 |
+| M1~M3 | 전 필드 왕복(한글·enum·TEXT), `varchar(255)`·`TEXT(65,535)` 경계와 `Data too long` 거부 |
+| M4, M4b | **현행 동작 기록**: unique 없음 → 중복 2행 저장, 이후 `findBySplSetId`는 예외 (B-014). 올바른 요구사항으로 확정한 것이 아님 |
+| M5 | 컬럼 collation `utf8mb4_0900_ai_ci` → `existsBySplSetId("ABC")`가 `abc`를 찾음 (Set은 대소문자 구분: B-007 근거, 운영 collation 미확인) |
+| S1~S3, S10 | `saveOtherMedicines` 정상·응답 내 중복·기존 ID 건너뛰기·무효 ID 사전 필터 |
+| S4~S6 | 한도 미달·제약 위반 시 **이미 `save()`한 행까지 롤백**, 재호출 정상 |
+| S7~S9 | `saveMedicinesByCategory`: 정상, 한도 미달은 INSERT 없이 실패, `saveAll` 중 제약 위반은 롤백 |
+| S11 | 저장된 ID는 재호출 시 모두 '이미 존재'로 판정 (추출 ID == 저장 ID를 실제 DB까지 확인, B-006 C안) |
+
+서비스 테스트(S)의 Mock 범위: `MedicineRepository`(FDA·DailyMed 호출)와 `TranslationService`만 Mock. 서비스·컨버터·JPA·MySQL은 실제. FDA 응답은 테스트가 만든 JSON이다.
+
+**아직 검증하지 못한 것**: 운영 DDL(unique/index/charset/collation/컬럼 타입), 운영 MySQL 버전·`sql_mode`·격리 수준, 운영 데이터의 중복 행, 실제 동시 요청(B-004), 실제 openFDA 응답, CI 실행 시간(새 서비스 테스트는 `@MockBean`으로 별도 컨텍스트·컨테이너를 추가로 띄운다).
